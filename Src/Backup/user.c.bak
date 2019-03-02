@@ -1,0 +1,53 @@
+/*
+ * user.c
+ *
+ *  Created on: Feb 28, 2019
+ *      Author: Boning
+ */
+#include "stm32f4xx_hal.h"
+uint8_t vram[240 * 360];
+
+// LCD SPI Port
+#define LCD_SPI_PORT GPIOF
+#define LCD_SPI_CLK GPIO_PIN_7
+#define LCD_SPI_MOSI GPIO_PIN_9
+#define LCD_SPI_MISO GPIO_PIN_8
+
+// LCD Chip Select
+#define LCD_SPI_NCS_PORT GPIOC
+#define LCD_SPI_NCS GPIO_PIN_2
+
+
+void LCD_SPIConfig(void) {
+	// Init SPI5 (LCD SPI) and required GPIO CLK
+	__HAL_RCC_GPIOF_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	__HAL_RCC_SPI5_CLK_ENABLE();
+
+	// Configure GPIO Pins for CLK MOSI MISO
+	GPIO_InitTypeDef Gpio_InitStruct;
+	Gpio_InitStruct.Alternate = GPIO_AF5_SPI5;
+	Gpio_InitStruct.Mode = GPIO_MODE_AF_PP;
+	Gpio_InitStruct.Pull = GPIO_NOPULL;
+	Gpio_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+
+	Gpio_InitStruct.Pin = LCD_SPI_CLK;
+	HAL_GPIO_Init(LCD_SPI_PORT, &Gpio_InitStruct);
+	Gpio_InitStruct.Pin = LCD_SPI_MOSI;
+	HAL_GPIO_Init(LCD_SPI_PORT, &Gpio_InitStruct);
+	Gpio_InitStruct.Pin = LCD_SPI_MISO;
+	HAL_GPIO_Init(LCD_SPI_PORT, &Gpio_InitStruct);
+
+	// Configure GPIO Pins for NCS
+	Gpio_InitStruct.Pin = LCD_SPI_NCS;
+	Gpio_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	Gpio_InitStruct.Pull = GPIO_PULLUP;
+	HAL_GPIO_Init(LCD_SPI_NCS_PORT, &Gpio_InitStruct);
+
+	// Configure SPI5
+	SPI_InitTypeDef Spi_InitStruct;
+
+
+
+
+}
