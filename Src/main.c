@@ -1,6 +1,5 @@
 
 #include "main.h"
-
 #include "lcd.h"
 #include "user.h"
 
@@ -22,21 +21,23 @@ int main(void)
   HAL_Init();
   SystemClock_Config();
   MX_GPIO_Init();
-  MX_LTDC_Init();
   MX_SPI5_Init();
 
   LED_Init();
-
-  HAL_GPIO_TogglePin(LED_PORT, LED_PIN_GREEN);
-  HAL_GPIO_TogglePin(LED_PORT, LED_PIN_RED);
-
-  // Boning Defined
   LCD_SpiInit();
   LCD_ModuleInit(&hspi5);
-  LCD_ReadCommand(&hspi5, 0x04, rxdata, 3);
+
+  LCD_SetAddress(10, 10, 20, 20);
   while (1)
   {
+	  for(uint8_t i = 0; i < 10; i++)
+	  {
+		  for(uint8_t j = 0; j < 10; j++)
+			  LCD_DrawColor(0xF800);
 
+		  for(uint8_t j = 0; j < 10; j++)
+			  LCD_DrawColor(0x03E0);
+	  }
   }
 
 }
@@ -156,7 +157,7 @@ static void MX_SPI5_Init(void)
   hspi5.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi5.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi5.Init.NSS = SPI_NSS_SOFT;
-  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
   hspi5.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi5.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi5.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;

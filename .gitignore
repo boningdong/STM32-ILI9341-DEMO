@@ -1,3 +1,4 @@
 .settings
 Debug
 *.elf.launch
+**/Backup/
