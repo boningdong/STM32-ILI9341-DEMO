@@ -7,19 +7,31 @@
 
 #include "main.h"
 #include "lcd.h"
+#include "lcd_clup.h"
 
+uint8_t VRAM[LCD_WIDTH * LCD_HEIGHT] = {0};
 
+// SPI Method
 void LCD_SpiInit() {
+	// Call SPI_Init and and GPIO_Init before calling this function
 	__HAL_RCC_GPIOC_CLK_ENABLE();
 	__HAL_RCC_GPIOD_CLK_ENABLE();
 
+	// Set LCD to 4-wire SPI Mode (IM[3:0] = 0110)
+	HAL_GPIO_WritePin(LCD_IM0_GPIO_Port, LCD_IM0_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LCD_IM1_GPIO_Port, LCD_IM1_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(LCD_IM2_GPIO_Port, LCD_IM2_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(LCD_IM3_GPIO_Port, LCD_IM3_Pin, GPIO_PIN_RESET);
+
 	GPIO_InitTypeDef gpioInit;
 	gpioInit.Mode = GPIO_MODE_OUTPUT_PP;
-	gpioInit.Pin = LCD_PIN_NCS;
 	gpioInit.Pull = GPIO_PULLUP;
 	gpioInit.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+
+	gpioInit.Pin = LCD_PIN_NCS;
 	HAL_GPIO_Init(LCD_NCS_PORT, &gpioInit);
-	gpioInit.Pull = GPIO_NOPULL;
+
+	gpioInit.Pull = GPIO_PULLDOWN;
 	gpioInit.Pin = LCD_PIN_DCX;
 	HAL_GPIO_Init(LCD_DCX_PORT, &gpioInit);
 
@@ -27,11 +39,41 @@ void LCD_SpiInit() {
 	HAL_GPIO_WritePin(LCD_DCX_PORT, LCD_PIN_DCX, GPIO_PIN_SET);
 }
 
+void LCD_LtdcInit() {
+	// Call LTDC_Init and GPIO_Init before calling this function
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	__HAL_RCC_GPIOD_CLK_ENABLE();
+
+	GPIO_InitTypeDef gpioInit;
+	gpioInit.Mode = GPIO_MODE_OUTPUT_PP;
+	gpioInit.Pull = GPIO_PULLUP;
+	gpioInit.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+
+	gpioInit.Pin = LCD_PIN_WRX;
+	HAL_GPIO_Init(LCD_WRX_PORT, &gpioInit);
+
+	gpioInit.Pin = LCD_PIN_RDX;
+	HAL_GPIO_Init(LCD_RDX_PORT, &gpioInit);
+
+	gpioInit.Pin = LCD_PIN_TE;
+	HAL_GPIO_Init(LCD_TE_PORT, &gpioInit);
+
+	gpioInit.Pin = LCD_PIN_DCX;
+	HAL_GPIO_Init(LCD_DCX_PORT, &gpioInit);
+
+	// Screen Parameters Set
+	HAL_LTDC_SetWindowSize_NoReload(&hltdc, LCD_WIDTH, LCD_HEIGHT, LTDC_LAYER_1);
+	HAL_LTDC_SetWindowPosition_NoReload(&hltdc, 0, 0, LTDC_LAYER_1);
+	HAL_LTDC_SetPixelFormat_NoReload(&hltdc, LTDC_PIXEL_FORMAT_L8 , LTDC_LAYER_1);
+	HAL_LTDC_SetAddress_NoReload(&hltdc, VRAM, LTDC_LAYER_1);
+	HAL_LTDC_ConfigCLUT(&hltdc, LCD_CLUT, 256, LTDC_LAYER_1);
+	HAL_LTDC_EnableCLUT_NoReload(&hltdc, LTDC_LAYER_1);
+	HAL_LTDC_Reload(&hltdc, LTDC_LAYER_1);
+
+}
+
 void LCD_ModuleInit() {
-	HAL_GPIO_WritePin(LCD_IM0_GPIO_Port, LCD_IM0_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LCD_IM1_GPIO_Port, LCD_IM1_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LCD_IM2_GPIO_Port, LCD_IM2_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LCD_IM3_GPIO_Port, LCD_IM3_Pin, GPIO_PIN_RESET);
+
 
 	//SOFTWARE RESET
 	LCD_WriteCommand(0x01);
@@ -91,14 +133,11 @@ void LCD_ModuleInit() {
 	LCD_WriteCommand(0xC7);
 	LCD_WriteData(0x86);
 
-	/*
+
 	//MEMORY ACCESS CONTROL
 	LCD_WriteCommand(0x36);
-	LCD_WriteData(0x48);*/
+	LCD_WriteData(0x48);
 
-	//PIXEL FORMAT
-	LCD_WriteCommand(0x3A);
-	LCD_WriteData(0x55);
 
 	//FRAME RATIO CONTROL, STANDARD RGB COLOR
 	LCD_WriteCommand(0xB1);
@@ -156,6 +195,22 @@ void LCD_ModuleInit() {
 	LCD_WriteData(0x36);
 	LCD_WriteData(0x0F);
 
+
+	//RGB INTERFACE
+	LCD_WriteCommand(0xB0);
+	LCD_WriteData(0xC2);
+
+	//PIXEL FORMAT
+	LCD_WriteCommand(0x3A);
+	LCD_WriteData(0x55);
+
+	//INTERFACE CONTROL
+	LCD_WriteCommand(0xF6);
+	LCD_WriteData(0x01);
+	LCD_WriteData(0x00);
+	LCD_WriteData(0x06);
+
+
 	//EXIT SLEEP
 	LCD_WriteCommand(0x11);
 	HAL_Delay(120);
@@ -182,20 +237,20 @@ void LCD_WriteData(uint8_t data) {
 }
 
 // Advanced Functions
-void LCD_SetAddress(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
-	LCD_WriteCommand( 0x2A);
-	LCD_WriteData( (x1 >> 8) & 0xFF);
-	LCD_WriteData( x1 & 0xFF);
-	LCD_WriteData((x2 >> 8) & 0xFF);
-	LCD_WriteData(x2 & 0xFF);
+void LCD_SetAddress(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+	LCD_WriteCommand(0x2A);
+	LCD_WriteData( (x0 >> 8) & 0xFF);
+	LCD_WriteData( x0 & 0xFF);
+	LCD_WriteData((x1 >> 8) & 0xFF);
+	LCD_WriteData(x1 & 0xFF);
 
-	LCD_WriteCommand( 0x2B);
+	LCD_WriteCommand(0x2B);
+	LCD_WriteData((y0 >> 8) & 0xFF);
+	LCD_WriteData(y0 & 0xFF);
 	LCD_WriteData((y1 >> 8) & 0xFF);
 	LCD_WriteData(y1 & 0xFF);
-	LCD_WriteData((y2 >> 8) & 0xFF);
-	LCD_WriteData(y2 & 0xFF);
 
-	LCD_WriteCommand( 0x2c);
+	LCD_WriteCommand(0x2c);
 }
 
 void LCD_DrawColor(uint16_t Color)
@@ -205,6 +260,36 @@ void LCD_DrawColor(uint16_t Color)
 	HAL_GPIO_WritePin(LCD_DCX_PORT, LCD_PIN_DCX, GPIO_PIN_SET);
 	HAL_SPI_Transmit(&hspi5, TempBuffer, 2, 1);
 	HAL_GPIO_WritePin(LCD_NCS_PORT, LCD_PIN_NCS, GPIO_PIN_SET);
+	HAL_Delay(1);
 }
 
+// SPI Draw Functions
+void LCD_SPI_DrawRect(uint16_t x0 , uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color) {
+	if (!((0 <= x0 && x0 <= LCD_WIDTH) || (0 <= x1 && x1 <= LCD_WIDTH)))
+		return;
+	if (!((0 <= y0 && y0 <= LCD_HEIGHT) || (0 <= y1 && y1 <= LCD_HEIGHT)))
+		return;
 
+	LCD_SetAddress(x0,y0, x1, y1);
+
+	for(int y = y0; y <= y1; y++) {
+		for(int x = x0; x <= x1; x++) {
+			LCD_DrawColor(color);
+		}
+	}
+
+}
+
+// LTDC Draw Functions
+void LCD_LTDC_DrawRect(uint16_t x0 , uint16_t y0, uint16_t x1, uint16_t y1, uint8_t color) {
+	if (!((0 <= x0 && x0 <= LCD_WIDTH) && (0 <= x1 && x1 <= LCD_WIDTH)))
+		return;
+	if (!((0 <= y0 && y0 <= LCD_HEIGHT) && (0 <= y1 && y1 <= LCD_HEIGHT)))
+		return;
+	for(int y = y0; y <= y1; y++) {
+		for(int x = x0; x <= x1; x++) {
+			VRAM[y * LCD_WIDTH + x] = color;
+		}
+	}
+
+}

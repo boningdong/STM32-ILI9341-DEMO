@@ -12,32 +12,30 @@ static void MX_GPIO_Init(void);
 static void MX_LTDC_Init(void);
 static void MX_SPI5_Init(void);
 
-static uint8_t txdata[64];
-static uint8_t rxdata[64];
-
 int main(void)
 {
 
   HAL_Init();
   SystemClock_Config();
   MX_GPIO_Init();
+  MX_LTDC_Init();
   MX_SPI5_Init();
 
   LED_Init();
   LCD_SpiInit();
   LCD_ModuleInit(&hspi5);
+  LCD_LtdcInit();
 
-  LCD_SetAddress(10, 10, 20, 20);
+  LCD_SetAddress(0, 0, 240, 320);
+
   while (1)
   {
-	  for(uint8_t i = 0; i < 10; i++)
-	  {
-		  for(uint8_t j = 0; j < 10; j++)
-			  LCD_DrawColor(0xF800);
-
-		  for(uint8_t j = 0; j < 10; j++)
-			  LCD_DrawColor(0x03E0);
-	  }
+	  //LCD_SPI_DrawRect(10, 10, 50, 30, 0xF800);
+	  LCD_LTDC_DrawRect(10, 10, 50, 30, 0x01);
+	  HAL_Delay(1);
+	  //CD_SPI_DrawRect(10, 10, 50, 30, 0x2233);
+	  LCD_LTDC_DrawRect(10, 10, 50, 30, 0x02);
+	  HAL_Delay(1);
   }
 
 }
@@ -112,9 +110,13 @@ static void MX_LTDC_Init(void)
   hltdc.Init.VerticalSync = 1;
   hltdc.Init.AccumulatedHBP = 29;
   hltdc.Init.AccumulatedVBP = 3;
-  hltdc.Init.AccumulatedActiveW = 349;
-  hltdc.Init.AccumulatedActiveH = 243;
+  //hltdc.Init.AccumulatedActiveW = 269; //349
+  hltdc.Init.AccumulatedActiveW = 349; // Default
+  //hltdc.Init.AccumulatedActiveH = 323; //243
+  hltdc.Init.AccumulatedActiveH = 243; // Default
+  //hltdc.Init.TotalWidth = 279;  //359
   hltdc.Init.TotalWidth = 359;
+  //hltdc.Init.TotalHeigh = 327;  //247
   hltdc.Init.TotalHeigh = 247;
   hltdc.Init.Backcolor.Blue = 0;
   hltdc.Init.Backcolor.Green = 0;
@@ -135,9 +137,9 @@ static void MX_LTDC_Init(void)
   pLayerCfg.FBStartAdress = FRAME_BUFFER_ADDR;
   pLayerCfg.ImageWidth = 320;
   pLayerCfg.ImageHeight = 240;
-  pLayerCfg.Backcolor.Blue = 20;
-  pLayerCfg.Backcolor.Green = 0;
-  pLayerCfg.Backcolor.Red = 0;
+  pLayerCfg.Backcolor.Blue = 200;
+  pLayerCfg.Backcolor.Green = 200;
+  pLayerCfg.Backcolor.Red = 200;
   if (HAL_LTDC_ConfigLayer(&hltdc, &pLayerCfg, 0) != HAL_OK)
   {
     Error_Handler();
@@ -168,7 +170,6 @@ static void MX_SPI5_Init(void)
   }
 
 }
-
 
 static void MX_GPIO_Init(void)
 {
