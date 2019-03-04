@@ -31,7 +31,7 @@ int main(void)
   while (1)
   {
 	  //LCD_SPI_DrawRect(10, 10, 50, 30, 0xF800);
-	  LCD_LTDC_DrawRect(10, 10, 50, 30, 0x01);
+	  LCD_LTDC_DrawRect(10, 10, 50, 30, 0x25);
 	  HAL_Delay(1);
 	  //CD_SPI_DrawRect(10, 10, 50, 30, 0x2233);
 	  LCD_LTDC_DrawRect(10, 10, 50, 30, 0x02);
@@ -88,7 +88,7 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
   PeriphClkInitStruct.PLLSAI.PLLSAIN = 50;
   PeriphClkInitStruct.PLLSAI.PLLSAIR = 2;
-  PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_8;
+  PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_2;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -110,36 +110,32 @@ static void MX_LTDC_Init(void)
   hltdc.Init.VerticalSync = 1;
   hltdc.Init.AccumulatedHBP = 29;
   hltdc.Init.AccumulatedVBP = 3;
-  //hltdc.Init.AccumulatedActiveW = 269; //349
-  hltdc.Init.AccumulatedActiveW = 349; // Default
-  //hltdc.Init.AccumulatedActiveH = 323; //243
-  hltdc.Init.AccumulatedActiveH = 243; // Default
-  //hltdc.Init.TotalWidth = 279;  //359
-  hltdc.Init.TotalWidth = 359;
-  //hltdc.Init.TotalHeigh = 327;  //247
-  hltdc.Init.TotalHeigh = 247;
-  hltdc.Init.Backcolor.Blue = 0;
-  hltdc.Init.Backcolor.Green = 0;
-  hltdc.Init.Backcolor.Red = 0;
+  hltdc.Init.AccumulatedActiveW = 269;
+  hltdc.Init.AccumulatedActiveH = 323;
+  hltdc.Init.TotalWidth = 279;
+  hltdc.Init.TotalHeigh = 327;
+  hltdc.Init.Backcolor.Blue = 5;
+  hltdc.Init.Backcolor.Green = 50;
+  hltdc.Init.Backcolor.Red = 10;
   if (HAL_LTDC_Init(&hltdc) != HAL_OK)
   {
     Error_Handler();
   }
   pLayerCfg.WindowX0 = 0;
-  pLayerCfg.WindowX1 = 320;
+  pLayerCfg.WindowX1 = 240;
   pLayerCfg.WindowY0 = 0;
-  pLayerCfg.WindowY1 = 240;
-  pLayerCfg.PixelFormat = LTDC_PIXEL_FORMAT_L8;
-  pLayerCfg.Alpha = 0xFF;
-  pLayerCfg.Alpha0 = 0;
+  pLayerCfg.WindowY1 = 320;
+  pLayerCfg.PixelFormat = LTDC_PIXEL_FORMAT_AL88;
+  pLayerCfg.Alpha = 0x10;
+  pLayerCfg.Alpha0 = 0x10;
   pLayerCfg.BlendingFactor1 = LTDC_BLENDING_FACTOR1_CA;
   pLayerCfg.BlendingFactor2 = LTDC_BLENDING_FACTOR2_CA;
-  pLayerCfg.FBStartAdress = FRAME_BUFFER_ADDR;
-  pLayerCfg.ImageWidth = 320;
-  pLayerCfg.ImageHeight = 240;
-  pLayerCfg.Backcolor.Blue = 200;
-  pLayerCfg.Backcolor.Green = 200;
-  pLayerCfg.Backcolor.Red = 200;
+  pLayerCfg.FBStartAdress = 0;
+  pLayerCfg.ImageWidth = 240;
+  pLayerCfg.ImageHeight = 320;
+  pLayerCfg.Backcolor.Blue = 100;
+  pLayerCfg.Backcolor.Green = 50;
+  pLayerCfg.Backcolor.Red = 100;
   if (HAL_LTDC_ConfigLayer(&hltdc, &pLayerCfg, 0) != HAL_OK)
   {
     Error_Handler();

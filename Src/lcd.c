@@ -9,7 +9,7 @@
 #include "lcd.h"
 #include "lcd_clup.h"
 
-uint8_t VRAM[LCD_WIDTH * LCD_HEIGHT] = {0};
+volatile uint8_t VRAM[LCD_WIDTH * LCD_HEIGHT] = {35,35,35,35,35,35,35,33,35,35,35,35,35,35,35,35,35,35};
 
 // SPI Method
 void LCD_SpiInit() {
@@ -62,13 +62,12 @@ void LCD_LtdcInit() {
 	HAL_GPIO_Init(LCD_DCX_PORT, &gpioInit);
 
 	// Screen Parameters Set
-	HAL_LTDC_SetWindowSize_NoReload(&hltdc, LCD_WIDTH, LCD_HEIGHT, LTDC_LAYER_1);
-	HAL_LTDC_SetWindowPosition_NoReload(&hltdc, 0, 0, LTDC_LAYER_1);
-	HAL_LTDC_SetPixelFormat_NoReload(&hltdc, LTDC_PIXEL_FORMAT_L8 , LTDC_LAYER_1);
-	HAL_LTDC_SetAddress_NoReload(&hltdc, VRAM, LTDC_LAYER_1);
+	HAL_LTDC_SetPixelFormat(&hltdc, LTDC_PIXEL_FORMAT_L8 , LTDC_LAYER_1);
+	HAL_LTDC_SetAddress(&hltdc, (uint32_t)VRAM, LTDC_LAYER_1);
+	HAL_LTDC_EnableCLUT(&hltdc, LTDC_LAYER_1);
 	HAL_LTDC_ConfigCLUT(&hltdc, LCD_CLUT, 256, LTDC_LAYER_1);
-	HAL_LTDC_EnableCLUT_NoReload(&hltdc, LTDC_LAYER_1);
-	HAL_LTDC_Reload(&hltdc, LTDC_LAYER_1);
+
+
 
 }
 
@@ -195,21 +194,24 @@ void LCD_ModuleInit() {
 	LCD_WriteData(0x36);
 	LCD_WriteData(0x0F);
 
-
-	//RGB INTERFACE
-	LCD_WriteCommand(0xB0);
-	LCD_WriteData(0xC2);
-
-	//PIXEL FORMAT
-	LCD_WriteCommand(0x3A);
-	LCD_WriteData(0x55);
+	LCD_WriteCommand(0x2c);
+	HAL_Delay(200);
 
 	//INTERFACE CONTROL
 	LCD_WriteCommand(0xF6);
 	LCD_WriteData(0x01);
 	LCD_WriteData(0x00);
 	LCD_WriteData(0x06);
+	//LCD_WriteData(0x08);
 
+	//RGB INTERFACE
+	LCD_WriteCommand(0xB0);
+	//LCD_WriteData(0xC2); //If this doesn't work, try 0xc3
+	LCD_WriteData(0xC2);
+
+	//PIXEL FORMAT
+	LCD_WriteCommand(0x3A);
+	LCD_WriteData(0x55);
 
 	//EXIT SLEEP
 	LCD_WriteCommand(0x11);
@@ -217,6 +219,9 @@ void LCD_ModuleInit() {
 
 	//TURN ON DISPLAY
 	LCD_WriteCommand(0x29);
+
+	LCD_WriteCommand(0x2c);
+	HAL_Delay(200);
 }
 
 // Basic Communication Functions
@@ -282,9 +287,9 @@ void LCD_SPI_DrawRect(uint16_t x0 , uint16_t y0, uint16_t x1, uint16_t y1, uint1
 
 // LTDC Draw Functions
 void LCD_LTDC_DrawRect(uint16_t x0 , uint16_t y0, uint16_t x1, uint16_t y1, uint8_t color) {
-	if (!((0 <= x0 && x0 <= LCD_WIDTH) && (0 <= x1 && x1 <= LCD_WIDTH)))
+	if (!((0 <= x0 && x0 <= LCD_WIDTH) || (0 <= x1 && x1 <= LCD_WIDTH)))
 		return;
-	if (!((0 <= y0 && y0 <= LCD_HEIGHT) && (0 <= y1 && y1 <= LCD_HEIGHT)))
+	if (!((0 <= y0 && y0 <= LCD_HEIGHT) || (0 <= y1 && y1 <= LCD_HEIGHT)))
 		return;
 	for(int y = y0; y <= y1; y++) {
 		for(int x = x0; x <= x1; x++) {

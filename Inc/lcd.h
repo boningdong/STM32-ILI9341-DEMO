@@ -11,8 +11,8 @@
 #ifndef LCD_H_
 #define LCD_H_
 
-#define LCD_WIDTH 20
-#define LCD_HEIGHT 20
+#define LCD_WIDTH 240
+#define LCD_HEIGHT 320
 
 // LCD Interface
 #define LCD_DCX_PORT GPIOD
